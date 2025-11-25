@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administrator/Assistent Bewerbung - Hugo Federov</title>
+<style>
+/* Basis Styles */
+body {
+  margin: 0;
+  font-family: 'Times New Roman', Times, serif;
+  color: #fff;
+  overflow-x: hidden;
+  text-align: center;
+  position: relative;
+  background: #111;
+}
+
+/* Hintergrund-Wasserzeichen FIB */
+body::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 800px;
+  height: 800px;
+  background: url("https://i.imgur.com/KMhogzF.png") no-repeat center center;
+  background-size: contain;
+  opacity: 0.15;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Sterne Hintergrund */
+.star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: white;
+  border-radius: 100%;
+  opacity: 0;
+  animation: twinkle 2s infinite ease-in-out;
+}
+@keyframes twinkle {0%,100%{opacity:0;}50%{opacity:1;}}
+
+/* Loader */
+#loader {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  transition: opacity 1s ease;
+}
+#loader.fade-out {opacity: 0; pointer-events: none;}
+#loader h1 {font-size: 4em; margin-bottom: 20px; letter-spacing: 6px; color: #fff; text-shadow: 0 0 15px #fff;}
+#loader-dots {display:flex;justify-content:center;gap:6px;margin-bottom:15px;}
+#loader-dots div {width:10px; height:10px; background:#fff; border-radius:50%; opacity:0.3; animation: blink 1.2s infinite;}
+#loader-dots div:nth-child(1){animation-delay:0s;}
+#loader-dots div:nth-child(2){animation-delay:0.2s;}
+#loader-dots div:nth-child(3){animation-delay:0.4s;}
+@keyframes blink{0%,80%,100%{opacity:0.3;transform:scale(1);}40%{opacity:1;transform:scale(1.5);}}
+
+/* Loader Progressbar */
+#progress-bar {width:400px;height:16px;background:#222;border:2px solid #fff;border-radius:8px;overflow:hidden;margin:10px 0;}
+#progress {width:0;height:100%;background:#fff;box-shadow:0 0 20px #fff;transition:width 0.3s;}
+#status {font-size:28px;color:#fff;text-shadow:0 0 8px #fff;margin-top:10px;}
+
+/* VS-Vertraulich Hinweis */
+#vs-warning {
+  margin-top: 15px;
+  font-size: 16px;
+  color: red;
+  font-weight: bold;
+  text-shadow: 0 0 10px red, 0 0 20px darkred;
+  animation: pulseRed 1.5s infinite;
+}
+@keyframes pulseRed {
+  0%, 100% { opacity: 0.7; text-shadow: 0 0 5px red, 0 0 15px darkred; }
+  50% { opacity: 1; text-shadow: 0 0 15px red, 0 0 30px darkred; }
+}
+
+/* Header Logo */
+.header-logo {
+  position: fixed;
+  top: 20px;
+  right: 25px;
+  width: 150px;
+  z-index:10;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed; top: 50%; left: 10px; transform: translateY(-50%);
+  width: 130px; background: rgba(20,20,20,0.85);
+  padding: 10px; display:flex; flex-direction:column; gap:10px;
+  border:1px solid #fff; border-radius:15px; z-index:2;
+}
+.sidebar a {text-decoration:none; color:#fff; padding:8px; border:1px solid #fff; border-radius:10px; transition: all 0.3s; font-size:14px; text-align:center; text-shadow:0 0 6px #fff;}
+.sidebar a:hover, .sidebar a.active {background: rgba(255,255,255,0.1); box-shadow:0 0 15px #fff;}
+
+/* Boxen */
+#main {display:none;position:relative;z-index:1;padding:60px 0;flex-direction:column;align-items:center;display:flex;}
+.box {background: rgba(20,20,20,0.85); border:2px solid #fff; border-radius:20px; padding:50px; margin:50px auto; width:85%; max-width:1000px; box-shadow: inset 0 0 15px rgba(255,255,255,0.4); transition: all 0.3s;}
+.box:hover {box-shadow: 0 0 25px #fff;}
+.box h2 {margin-top:0;color:#fff;text-shadow:0 0 15px #fff;font-size:28px;}
+.box p {color:#fff;text-shadow:0 0 10px #fff;font-size:20px;margin:10px 0;text-align:left;}
+
+/* Profil */
+.profile-container {display:flex;gap:30px;flex-wrap:wrap;justify-content:center;}
+.profile-left {flex:1 1 300px;background:#333;border-radius:20px;height:570px;border:2px solid #fff;box-shadow:0 0 20px #fff;}
+.profile-right {flex:1 1 300px;display:flex;flex-direction:column;gap:15px;}
+.profile-small-box {background: rgba(20,20,20,0.9);border:2px solid #fff;border-radius:15px; padding:20px;text-align:center;color:#fff;font-size:18px;box-shadow:0 0 10px #fff inset;transition: all 0.3s;}
+.profile-small-box:hover {box-shadow:0 0 20px #fff;}
+.profile-small-box p {text-align:center;}
+
+/* 🔥 PROGRESSBARS EINGEFÜGT */
+.leistung-row {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+}
+.leistung-label {
+  width: 200px;
+  text-align: left;
+}
+.leistung-bar-wrapper {
+  flex-grow: 1;
+  height: 12px;
+  background: #333;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 0 10px;
+}
+.leistung-bar {
+  height: 12px;
+  background: #fff;
+box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff;
+; /* NICHT verändert */
+  border-radius: 6px;
+  transition: width 1s ease;
+}
+.leistung-prozent {
+  width: 40px;
+  text-align: right;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Header Logo -->
+<img src="https://i.imgur.com/KMhogzF.png" class="header-logo" alt="FIB Logo">
+
+<!-- Loader -->
+<div id="loader">
+  <h1><u>Administrator/Assistent Bewerbung</u></h1>
+  <div id="loader-dots"><div></div><div></div><div></div></div>
+  <div id="progress-bar"><div id="progress"></div></div>
+  <div id="status">🚨 Starte Bewerbungs-Infos... 0%</div>
+
+  <!-- NEUER VS-Hinweis -->
+  <div id="vs-warning">
+    Verschlusssache gemäß BDG §28 Abs. 3 Ziff. 3 – VS-VERTRAULICH<br>
+    Dieses Dokument ist ausschließlich für die Teamverwaltung bestimmt.<br>
+    Der Verfasser der Bewerbung, in diesem Fall ich, Hugo Federov, ist berechtigt, den Zugriff an Dritte weiterzugeben.
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <a href="#box1" class="active">Vorwort</a>
+  <a href="#box2">Profil</a>
+  <a href="#box3">Online-Zeiten</a>
+  <a href="#box4">Regelwerk</a>
+  <a href="#box5">Orga Erfahrung</a>
+  <a href="#box6">Voraussetzungen</a>
+  <a href="#box7">Schlusswort</a>
+</div>
+
+<div id="main">
+
+<!-- Box1 Vorwort -->
+<div class="box" id="box1">
+<h2>Vorwort</h2>
+<p>Hallo liebe Teamverwaltung,</p>
+<p>Hiermit bewerbe ich mich auf die Position als Administrator/Assistent!</p>
+<p>Ich hoffe, Sie haben Spaß beim Lesen der Bewerbung, und ich hoffe auf eine positive Rückmeldung.</p>
+<p>Hugo Federov|157291</p>
+</div>
+
+<!-- Box2 Profil -->
+<div class="box" id="box2">
+  <h2>Profil</h2>
+  <div class="profile-container">
+    
+    <!-- Linke Box mit Bild -->
+    <div class="profile-left" style="
+      background-image: url('https://i.imgur.com/2zscxvL.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    "></div>
+
+    <!-- Rechte Box mit Infos -->
+    <div class="profile-right" style="position: relative;">
+      <!-- Overlay Bild über den Namen -->
+      <img src="https://i.imgur.com/KJE6VrS.png" style="
+          position: absolute;
+          top: -0px;
+          left: 55%;
+          transform: translateX(-50%);
+          width: 0px;
+          height: 0px;
+          z-index: 0;
+      ">    
+      <div class="profile-small-box"><strong>Name</strong> Hugo</div>
+      <div class="profile-small-box"><strong>Dein Alter:</strong> 18</div>
+      <div class="profile-small-box"><strong>Discord Name:</strong> toiletten.mann</div>
+      <div class="profile-small-box"><strong>Nickname:</strong> Hugo federov</div>
+      <div class="profile-small-box"><strong>Deine ID:</strong> 157291</div>
+      <div class="profile-small-box"><strong>Spielerlevel 10:</strong> Bin Level 32 ✅</div>
+      <div class=" profile-small-box"><strong>Keine Regelbrüche für Cheating:</strong> Ich habe keinen Cheating-Regelbruch begangen.✅</div>
+    </div>
+  </div>
+</div>
+
+<!-- Box3 Online-Zeiten -->
+<div class="box" id="box3">
+<h2>Zu welchen Zeiten bist du online? </h2>
+<p><strong><u>Mo-Fr:</u></strong> Unter der Woche bin ich meistens von: 17:00-23:00 </p>
+<p><strong><u>Fr-So:</u></strong> Am Wochenende bin ich ab 17:00 Uhr online – mit offenem Ende, da ich am Wochenende keine zeitliche Beschränkung habe. Es kann aber variieren: Manchmal komme ich früher online und manchmal später. </p>
+</div>
+
+<!-- Box4 Regelwerk-Wissen -->
+<div class="box" id="box4">
+<h2>Regelwerk</h2>
+
+<div class="leistung-row">
+  <div class="leistung-label">Legale Organisationen</div>
+  <div class="leistung-bar-wrapper"><div class="leistung-bar" style="width:70%;"></div></div>
+  <div class="leistung-prozent">70%</div>
+</div>
+
+<div class="leistung-row">
+  <div class="leistung-label">Allgemeine Regeln</div>
+  <div class="leistung-bar-wrapper"><div class="leistung-bar" style="width:70%;"></div></div>
+  <div class="leistung-prozent">70%</div>
+</div>
+
+<div class="leistung-row">
+  <div class="leistung-label">Event-Regeln</div>
+  <div class="leistung-bar-wrapper"><div class="leistung-bar" style="width:80%;"></div></div>
+  <div class="leistung-prozent">80%</div>
+</div>
+
+<div class="leistung-row">
+  <div class="leistung-label">Ghetto-Regeln</div>
+  <div class="leistung-bar-wrapper"><div class="leistung-bar" style="width:80%;"></div></div>
+  <div class="leistung-prozent">80%</div>
+</div>
+
+<div class="leistung-row">
+  <div class="leistung-label">Greenzone-Regeln</div>
+  <div class="leistung-bar-wrapper"><div class="leistung-bar" style="width:100%;"></div></div>
+  <div class="leistung-prozent">100%</div>
+</div>
+
+<div class="leistung-row">
+  <div class="leistung-label">Leader-Regeln</div>
+  <div class="leistung-bar-wrapper"><div class="leistung-bar" style="width:90%;"></div></div>
+  <div class="leistung-prozent">90%</div>
+</div>
+
+<div class="leistung-row">
+  <div class="leistung-label">Wahl-Regeln</div>
+  <div class="leistung-bar-wrapper"><div class="leistung-bar" style="width:60%;"></div></div>
+  <div class="leistung-prozent">60%</div>
+</div>
+
+</div>
+
+<!-- Box5 Orga Erfahrung -->
+<div class="box" id="box5">
+<h2>Welche Erfahrungen hattest du in offiziellen sowie inoffiziellen Organisationen?</h2>
+<h3>Offizielle Organisationen</h3>
+
+<div class="profile-small-box">
+<strong>
+    <p>NG - / - Rang: 10</p>
+    <p>USSS - Chelo Lima - Rang: 15</p>
+    <p>LSPD - / - Rang: 21</p>
+    <p>EMS - / - Rang: 7</p>
+    <p>FIB - Steve Cock - Rang: 23</p>
+</strong>
+</div>
+
+<h3>Inoffizielle Organisationen</h3>
+
+<div class="profile-small-box">
+<strong>
+    <p>Bloods - / - Rang: 6</p>
+    <p>Ballas - / - Rang: 6</p>
+    <p>Marabunta - Luka Einker - Rang: 9</p>
+    <p>Vagos - / - Rang: 6</p>
+</strong>
+</div>
+
+</div>
+
+<!--Box6 Voraussetzungen-->
+<div class="box" id="box6">
+<h2>Voraussetzungen</h2>
+<div class="profile-small-box"><strong><h3>Wärst du bereit, das RP-Leben zu verlassen, um Admin zu werden?</h3> </strong><p> >> Ja, ich wäre bereit, mein RP-Leben zu verlassen, da es mein Ziel ist, Admin zu werden</p></div>
+<div class="profile-small-box"><strong><h3>Wärst du bereit, dein Unternehmen zu verkaufen?</h3> </strong><p> >> Ja, wenn ich eins besitzen würde, würde ich es verkaufen.</p></div>
+</div>
+
+<!--Box7 Schlusswort-->
+<div class="box" id="box7">
+<h2>Schlusswort</h2>
+<p>Das war’s mit meiner Bewerbung und ich hoffe, ich kann euch im Gespräch mehr über mich erzählen.</p>
+<p>Ich danke Ihnen herzlich für die Zeit, die Sie sich für meine Bewerbung nehmen, und würde mich sehr über eine positive Rückmeldung freuen.</p>
+<p><u>Mit freundlichen Grüßen,</u><br><u>Hugo Federov|157291</u></p>
+</div>
+
+</div> <!-- Ende von #main -->
+
+<script>
+/* Loader */
+let progress=0;
+let duration=4000;
+let steps=100;
+let intervalTime=duration/steps;
+let interval=setInterval(()=>{
+  progress++;
+  if(progress>100) progress=100;
+  document.getElementById("progress").style.width=progress+"%";
+  document.getElementById("status").innerText="🚨 Starte Bewerbungs-Infos... "+progress+"%";
+  if(progress>=100){
+    clearInterval(interval);
+    setTimeout(()=>{
+      document.getElementById("loader").classList.add("fade-out");
+      setTimeout(()=>{document.getElementById("main").style.display="flex";},1000);
+    },200);
+  }
+},intervalTime);
+
+/* Sidebar Active */
+const sections=document.querySelectorAll(".box");
+const navLinks=document.querySelectorAll(".sidebar a");
+window.addEventListener("scroll",()=>{
+  let current="";
+  sections.forEach(section=>{
+    const sectionTop=section.offsetTop-150;
+    if(pageYOffset>=sectionTop){current=section.getAttribute("id");}
+  });
+  navLinks.forEach(link=>{link.classList.remove("active");if(link.getAttribute("href")==="#"+current){link.classList.add("active");}});
+});
+
+/* Sterne Hintergrund */
+const starCount=800;
+const pageHeight=document.body.scrollHeight;
+for(let i=0;i<starCount;i++){
+  const star=document.createElement('div');
+  star.classList.add('star');
+  star.style.top=Math.random()*pageHeight+'px';
+  star.style.left=Math.random()*100+'vw';
+  star.style.animationDuration=(1+Math.random()*2)+'s';
+  document.body.appendChild(star);
+}
+
+/* Sterne im Loader */
+const loaderElement = document.getElementById('loader');
+const loaderStarCount = 800;
+for(let i=0;i<loaderStarCount;i++){
+  const star = document.createElement('div');
+  star.classList.add('star');
+  star.style.top = Math.random() * loaderElement.offsetHeight + 'px';
+  star.style.left = Math.random() * loaderElement.offsetWidth + 'px';
+  star.style.width = '2px';
+  star.style.height = '2px';
+  star.style.background = 'white';
+  star.style.borderRadius = '100%';
+  star.style.opacity = Math.random();
+  star.style.animationDuration = (1 + Math.random() * 2) + 's';
+  loaderElement.appendChild(star);
+}
+
+</script>
+</body>
+</html>
